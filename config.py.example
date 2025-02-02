@@ -1,0 +1,4 @@
+import logging
+WEBCAM_ON = 'https://example.com/my_on_webhook'
+WEBCAM_OFF = 'https://example.com/my_off_webhook'
+LOG_LEVEL = logging.INFO
