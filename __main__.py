@@ -1,4 +1,5 @@
 import asyncio
+import signal
 import sys
 import threading
 import tkinter as tk
@@ -99,12 +100,13 @@ def toggle_console(icon, item):
     """
     console.after(0, lambda: console.deiconify() if console.state() == 'withdrawn' else console.withdraw())
 
-def quit_app(icon, item):
+def quit_app(icon=None, item=None):
     """
-    Quit the application.
+    Quit the application cleanly.
     """
-    icon.stop()  # stop the tray icon loop
-    console.after(0, console.destroy)  # close the console window (on the main thread)
+    if icon:
+        icon.stop()
+    console.after(0, console.destroy)
 
 def setup_tray_icon():
     """
@@ -134,10 +136,10 @@ async def process_webcam_changes():
     async for webcam_key, key_name, on in webcam.watch_queue():
         if on:
             logging.info(f"Webcam in use by {key_name} (key: {webcam_key})")
-            call_webhook(config.WEBCAM_ON, {"webcam_key": webcam_key, "key_name": key_name, "status": "on"})
+            asyncio.create_task(asyncio.to_thread(call_webhook, config.WEBCAM_ON, {"webcam_key": webcam_key, "key_name": key_name, "status": "on"}))
         else:
             logging.info(f"Webcam no longer in use by {key_name} (key: {webcam_key})")
-            call_webhook(config.WEBCAM_OFF, {"webcam_key": webcam_key, "key_name": key_name, "status": "off"})
+            asyncio.create_task(asyncio.to_thread(call_webhook, config.WEBCAM_OFF, {"webcam_key": webcam_key, "key_name": key_name, "status": "off"}))
 
     
 def call_webhook(url, data):
@@ -168,6 +170,10 @@ if __name__ == '__main__':
     tk_handler.setFormatter(formatter)
     tk_handler.setLevel(logging.DEBUG)
     logging.getLogger().addHandler(tk_handler)
+
+    # Handle Ctrl+C gracefully
+    signal.signal(signal.SIGINT, lambda *_: quit_app())
+    signal.signal(signal.SIGTERM, lambda *_: quit_app())
     
     # Start the asyncio webcam monitor in a background thread.
     async_thread = threading.Thread(target=run_webcam_monitor, daemon=True)
@@ -178,4 +184,9 @@ if __name__ == '__main__':
     tray_thread.start()
 
     # Start the Tkinter mainloop (this call is blocking).
-    console.mainloop()
+    try:
+        console.mainloop()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        logging.info('Webcam monitor shutting down')
