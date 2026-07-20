@@ -1,5 +1,7 @@
 import asyncio
+import os
 import signal
+import subprocess
 import sys
 import threading
 import tkinter as tk
@@ -9,7 +11,12 @@ import requests
 import pystray
 from PIL import Image, ImageDraw
 
+OPENRGB_EXE = os.path.join(
+    os.path.expanduser('~'), 'tools', 'openrgb', 'OpenRGB Windows 64-bit', 'OpenRGB.exe'
+)
+
 from . import webcam
+from . import mic_taskbar
 from . import config
 
 #############################################
@@ -133,7 +140,7 @@ def run_tray_icon():
 #############################################
 
 async def process_webcam_changes():
-    async for webcam_key, key_name, on in webcam.watch_queue():
+    async for webcam_key, key_name, on in webcam.watch_queue('webcam'):
         if on:
             logging.info(f"Webcam in use by {key_name} (key: {webcam_key})")
             asyncio.create_task(asyncio.to_thread(call_webhook, config.WEBCAM_ON, {"webcam_key": webcam_key, "key_name": key_name, "status": "on"}))
@@ -141,7 +148,7 @@ async def process_webcam_changes():
             logging.info(f"Webcam no longer in use by {key_name} (key: {webcam_key})")
             asyncio.create_task(asyncio.to_thread(call_webhook, config.WEBCAM_OFF, {"webcam_key": webcam_key, "key_name": key_name, "status": "off"}))
 
-    
+
 def call_webhook(url, data):
     try:
         response = requests.post(url, json=data)
@@ -151,10 +158,47 @@ def call_webhook(url, data):
         logging.error(f"Error calling webhook: {e}")
 
 
+#############################################
+# Microphone Monitor & Keyboard Lightbar
+#############################################
+
+def set_lightbar(color_hex: str):
+    """Set all 19 lightbar LEDs to a single colour via OpenRGB."""
+    colors = ','.join([color_hex] * 19)
+    try:
+        subprocess.Popen(
+            [OPENRGB_EXE, '--noautoconnect', '--device', '0', '--zone', '1', '--color', colors],
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
+    except FileNotFoundError:
+        logging.warning(f'OpenRGB not found at {OPENRGB_EXE} — lightbar control unavailable')
+
+
+def _lightbar_color_for(mic_state: str) -> str:
+    """Red while live and unmuted, off when muted or when nothing's listening
+    (no taskbar mic icon means no active call)."""
+    return 'FF0000' if mic_state == 'unmuted' else '000000'
+
+
+async def process_microphone_changes():
+    async for mic_state in mic_taskbar.watch():
+        logging.info(f"Mic taskbar state: {mic_state}")
+        asyncio.create_task(asyncio.to_thread(set_lightbar, _lightbar_color_for(mic_state)))
+
+
+async def _run_all_monitors():
+    # Set correct initial lightbar state before entering event loops
+    initial = await asyncio.to_thread(mic_taskbar.get_state)
+    logging.info(f"Startup mic taskbar state: {initial}")
+    await asyncio.to_thread(set_lightbar, _lightbar_color_for(initial))
+    await asyncio.gather(
+        process_webcam_changes(),
+        process_microphone_changes(),
+    )
+
 
 def run_webcam_monitor():
-    # This function creates and runs an event loop to run the coroutine.
-    asyncio.run(process_webcam_changes())
+    asyncio.run(_run_all_monitors())
 
 #############################################
 # Main Entry Point

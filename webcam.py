@@ -7,18 +7,20 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 hiveToWatch = winreg.HKEY_CURRENT_USER
-keyToWatch = r'SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam'
-keysToWatch = (keyToWatch,'\\'.join((keyToWatch, 'NonPackaged')))
+_BASE_KEY = r'SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore'
+keyToWatch = '\\'.join((_BASE_KEY, 'webcam'))  # kept for backwards compat
+keysToWatch = (keyToWatch, '\\'.join((keyToWatch, 'NonPackaged')))  # kept for backwards compat
 value_name = "LastUsedTimeStop"
 
 
 # Dedicated pool sized for all blocking registry watchers + headroom
 _watcher_pool = None
 
-def _get_pool(num_keys):
+def _get_pool(num_keys=0):
     global _watcher_pool
     if _watcher_pool is None:
-        _watcher_pool = ThreadPoolExecutor(max_workers=num_keys + 4)
+        # Size generously upfront to cover all device types without needing resize
+        _watcher_pool = ThreadPoolExecutor(max_workers=max(num_keys + 4, 32))
     return _watcher_pool
 
 async def watch_webcam(webcam_key):
@@ -32,23 +34,35 @@ def watch_key(key_path):
     win32api.RegNotifyChangeKeyValue(handleToBeWatched, False, win32api.REG_NOTIFY_CHANGE_LAST_SET, None, False)
     win32api.RegCloseKey(handleToBeWatched)
     time.sleep(1.5)  # close handle and wait before returning as change takes a while to actually stick
-    return key_path, webcam_on(key_path)
+    return key_path, device_in_use(key_path)
 
 
-def webcam_on(webcam_key):
+def device_in_use(key_path):
+    """Returns True if LastUsedTimeStop == 0 (device actively in use). False if not in use or value missing."""
+    try:
+        reg = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
+        with winreg.OpenKey(reg, key_path, 0, winreg.KEY_QUERY_VALUE) as sk:
+            value, _ = winreg.QueryValueEx(sk, value_name)
+            return (value == 0)
+    except OSError:
+        return False
+
+def webcam_on(webcam_key):  # backwards compat alias
+    return device_in_use(webcam_key)
+
+
+def get_keys_to_watch(device_name='webcam'):
+    base = '\\'.join((_BASE_KEY, device_name))
+    roots = (base, '\\'.join((base, 'NonPackaged')))
     reg = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
-    with winreg.OpenKey(reg, webcam_key, 0, winreg.KEY_QUERY_VALUE) as sk:
-        value, value_type = winreg.QueryValueEx(sk, value_name)
-        return (value == 0)
-
-
-def get_keys_to_watch():
-    reg = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
-    for keyToWatch in keysToWatch:
-        with winreg.OpenKey(reg, keyToWatch, 0, winreg.KEY_READ) as k:
+    for root in roots:
+        with winreg.OpenKey(reg, root, 0, winreg.KEY_READ) as k:
             for i in range(0, 999):
                 try:
-                    yield '\\'.join((keyToWatch, winreg.EnumKey(k, i)))
+                    sub = winreg.EnumKey(k, i)
+                    if sub == 'NonPackaged':  # container key, no LastUsedTimeStop
+                        continue
+                    yield '\\'.join((root, sub))
                 except OSError:
                     break
 
@@ -71,17 +85,15 @@ async def _monitor_key(webcam_key, event_queue):
 # Strong references to monitor tasks so they aren't garbage collected
 _monitor_tasks = set()
 
-def create_webcam_queue():
+def create_device_queue(device_name='webcam'):
     """
-    Creates an asyncio.Queue and starts background tasks to monitor each webcam key.
-    
-    Returns:
-        asyncio.Queue: A queue into which state change events will be placed.
+    Creates an asyncio.Queue and starts background tasks to monitor each registry key
+    for the given CapabilityAccessManager device (e.g. 'webcam', 'microphone').
     """
     event_queue = asyncio.Queue()
-    keys = list(get_keys_to_watch())
+    keys = list(get_keys_to_watch(device_name))
     _get_pool(len(keys))
-    logging.info(f'Monitoring {len(keys)} webcam registry keys')
+    logging.info(f'Monitoring {len(keys)} {device_name} registry keys')
     for key in keys:
         logging.info(f'  {key.split(chr(92))[-1]}')
         task = asyncio.create_task(_monitor_key(key, event_queue))
@@ -89,14 +101,14 @@ def create_webcam_queue():
         task.add_done_callback(_monitor_tasks.discard)
     return event_queue
 
-async def watch_queue():
+def create_webcam_queue():  # backwards compat alias
+    return create_device_queue('webcam')
+
+async def watch_queue(device_name='webcam'):
     """
-    Asynchronously yields events as they are available in the queue.
-    
-    Yields:
-        tuple: A tuple of (webcam_key, key_name, on) for each state change event.
+    Asynchronously yields (key, key_name, on) tuples as device state changes.
     """
-    queue = create_webcam_queue()
+    queue = create_device_queue(device_name)
     while True:
         event = await queue.get()
         yield event
