@@ -147,6 +147,9 @@ def valid_colors(colors):
     return len(colors) == 139 and all(re.fullmatch('[0-9a-fA-F]{6}', c) for c in colors)
 
 
+OPENRGB_RETRIES = 2
+
+
 def guardian(parent_pid, executable):
     """Own all lighting children; stop them before restoration on every exit path."""
     kernel = C.WinDLL('kernel32', use_last_error=True)
@@ -171,7 +174,21 @@ def guardian(parent_pid, executable):
     ntdll.NtResumeProcess.restype = C.c_long
     inbox = queue.Queue()
     threading.Thread(target=lines_to_queue, args=(sys.stdin, inbox), daemon=True).start()
+
+    def launch(colors):
+        with open(Path(__file__).with_name('k95_openrgb.log'), 'wb') as output:
+            process = subprocess.Popen(
+                [executable, '--noautoconnect', '--device', '0', '--color', ','.join(colors)],
+                stdout=output, stderr=output,
+                creationflags=subprocess.CREATE_NO_WINDOW | 0x4)
+        win32job.AssignProcessToJobObject(job, int(process._handle))
+        if ntdll.NtResumeProcess(int(process._handle)) != 0:
+            raise OSError('Could not resume managed OpenRGB update')
+        return process
+
     child = None
+    colors = None
+    retries = 0
     try:
         with device_lock():
             try:
@@ -195,6 +212,15 @@ def guardian(parent_pid, executable):
                         code = child.poll()
                         if code is not None:
                             child = None
+                            if code and retries < OPENRGB_RETRIES and now - started < 8:
+                                # OpenRGB's HID detection intermittently misses
+                                # the K95 (no device 0, exit -1); a rerun
+                                # normally finds it.
+                                retries += 1
+                                LOG.warning('OpenRGB exit %s; retry %s', code, retries)
+                                time.sleep(0.5)
+                                child = launch(colors)
+                                continue
                             if code:
                                 raise OSError('OpenRGB failed: exit ' + str(code))
                             print('OK', flush=True)
@@ -213,15 +239,9 @@ def guardian(parent_pid, executable):
                         colors = command[6:].split(',')
                         if child is not None or not valid_colors(colors):
                             raise ValueError('Invalid or overlapping RGB update')
-                        with open(Path(__file__).with_name('k95_openrgb.log'), 'wb') as output:
-                            child = subprocess.Popen(
-                                [executable, '--noautoconnect', '--device', '0', '--color', ','.join(colors)],
-                                stdout=output, stderr=output,
-                                creationflags=subprocess.CREATE_NO_WINDOW | 0x4)
-                        win32job.AssignProcessToJobObject(job, int(child._handle))
-                        if ntdll.NtResumeProcess(int(child._handle)) != 0:
-                            raise OSError('Could not resume managed OpenRGB update')
+                        child = launch(colors)
                         started = now
+                        retries = 0
                     else:
                         raise ValueError('Unknown guardian command')
             except BaseException:
