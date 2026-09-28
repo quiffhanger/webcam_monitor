@@ -1,0 +1,45 @@
+2026-05-06 13:02:00,514 DEBUG Using proactor: IocpProactor
+2026-05-06 13:02:00,516 INFO Starting - toggle camera on/off...
+2026-05-06 13:02:00,516 INFO Monitoring 14 webcam registry keys
+2026-05-06 13:02:00,517 INFO   91750D7E.Slack_8she8kybcnzg4
+2026-05-06 13:02:00,517 INFO   Claude_pzs8sxrjxfjjc
+2026-05-06 13:02:00,517 INFO   Microsoft.BioEnrollment_cw5n1h2txyewy
+2026-05-06 13:02:00,517 INFO   Microsoft.GamingApp_8wekyb3d8bbwe
+2026-05-06 13:02:00,517 INFO   Microsoft.SurfaceHub_8wekyb3d8bbwe
+2026-05-06 13:02:00,517 INFO   Microsoft.WindowsCamera_8wekyb3d8bbwe
+2026-05-06 13:02:00,517 INFO   MicrosoftCorporationII.Windows365_8wekyb3d8bbwe
+2026-05-06 13:02:00,517 INFO   MSTeams_8wekyb3d8bbwe
+2026-05-06 13:02:00,518 INFO   NonPackaged
+2026-05-06 13:02:00,518 INFO   C:#Program Files (x86)#Microsoft#Edge#Application#msedge.exe
+2026-05-06 13:02:00,518 INFO   C:#Program Files#Google#Chrome#Application#chrome.exe
+2026-05-06 13:02:00,518 INFO   C:#Program Files#obs-studio#bin#64bit#obs64.exe
+2026-05-06 13:02:00,518 INFO   C:#Program Files#Zoom#bin#Zoom.exe
+2026-05-06 13:02:00,518 INFO   C:#Windows#System32#ShellHost.exe
+2026-05-06 13:02:00,520 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\91750D7E.Slack_8she8kybcnzg4
+2026-05-06 13:02:00,521 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\Claude_pzs8sxrjxfjjc
+2026-05-06 13:02:00,521 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\Microsoft.BioEnrollment_cw5n1h2txyewy
+2026-05-06 13:02:00,522 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\Microsoft.GamingApp_8wekyb3d8bbwe
+2026-05-06 13:02:00,523 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\Microsoft.SurfaceHub_8wekyb3d8bbwe
+2026-05-06 13:02:00,523 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\Microsoft.WindowsCamera_8wekyb3d8bbwe
+2026-05-06 13:02:00,524 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\MicrosoftCorporationII.Windows365_8wekyb3d8bbwe
+2026-05-06 13:02:00,524 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\MSTeams_8wekyb3d8bbwe
+2026-05-06 13:02:00,525 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\NonPackaged
+2026-05-06 13:02:00,525 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\NonPackaged\C:#Program Files (x86)#Microsoft#Edge#Application#msedge.exe
+2026-05-06 13:02:00,525 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\NonPackaged\C:#Program Files#Google#Chrome#Application#chrome.exe
+2026-05-06 13:02:00,526 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\NonPackaged\C:#Program Files#obs-studio#bin#64bit#obs64.exe
+2026-05-06 13:02:00,526 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\NonPackaged\C:#Program Files#Zoom#bin#Zoom.exe
+2026-05-06 13:02:00,526 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\NonPackaged\C:#Windows#System32#ShellHost.exe
+2026-05-06 13:37:41,887 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\MSTeams_8wekyb3d8bbwe
+2026-05-06 13:37:41,890 INFO EVENT #1 [ON] MSTeams_8wekyb3d8bbwe
+2026-05-06 13:56:14,582 INFO EVENT #2 [OFF] MSTeams_8wekyb3d8bbwe
+2026-05-06 13:56:14,582 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\MSTeams_8wekyb3d8bbwe
+2026-05-06 13:56:46,044 INFO EVENT #3 [OFF] C:#Program Files#obs-studio#bin#64bit#obs64.exe
+2026-05-06 13:56:46,044 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\NonPackaged\C:#Program Files#obs-studio#bin#64bit#obs64.exe
+2026-05-06 14:22:53,694 INFO EVENT #4 [ON] MSTeams_8wekyb3d8bbwe
+2026-05-06 14:22:53,695 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\MSTeams_8wekyb3d8bbwe
+2026-05-06 14:22:56,311 INFO EVENT #5 [OFF] MSTeams_8wekyb3d8bbwe
+2026-05-06 14:22:56,311 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\MSTeams_8wekyb3d8bbwe
+2026-05-06 14:22:58,685 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\MSTeams_8wekyb3d8bbwe
+2026-05-06 14:22:58,685 INFO EVENT #6 [ON] MSTeams_8wekyb3d8bbwe
+2026-05-06 14:23:00,277 INFO EVENT #7 [OFF] MSTeams_8wekyb3d8bbwe
+2026-05-06 14:23:00,277 DEBUG Waiting for change on SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam\MSTeams_8wekyb3d8bbwe

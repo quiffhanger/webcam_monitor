@@ -37,12 +37,25 @@ def get_state() -> str:
     return 'none'
 
 
+def safe_get_state():
+    """get_state(), but returns None instead of raising. UI Automation calls
+    into Explorer intermittently fail with transient COMErrors (e.g.
+    'Catastrophic failure', 'An event was unable to invoke any of the
+    subscribers'); letting those propagate kills the whole monitor thread."""
+    try:
+        return get_state()
+    except Exception:
+        logging.warning('Mic taskbar state read failed; will retry', exc_info=True)
+        return None
+
+
 async def watch(poll_interval: float = POLL_INTERVAL):
-    """Yields the mic taskbar state ('muted' / 'unmuted' / 'none') each time it changes."""
+    """Yields the mic taskbar state ('muted' / 'unmuted' / 'none') each time it changes.
+    Failed reads are skipped, keeping the last known state."""
     last = None
     while True:
-        state = await asyncio.to_thread(get_state)
-        if state != last:
+        state = await asyncio.to_thread(safe_get_state)
+        if state is not None and state != last:
             logging.debug(f'Mic taskbar state -> {state}')
             yield state
             last = state

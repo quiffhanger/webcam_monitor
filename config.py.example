@@ -2,3 +2,10 @@ import logging
 WEBCAM_ON = 'https://example.com/my_on_webhook'
 WEBCAM_OFF = 'https://example.com/my_off_webhook'
 LOG_LEVEL = logging.INFO
+
+# Published free/busy ICS feed URL (Outlook Web -> Settings -> Calendar ->
+# Shared calendars -> Publish, or the internal reachability-calendar link).
+# Treat this as a credential: it exposes a year of your busy/free schedule
+# to anyone holding the link. Keep it in this local config.py only - do NOT
+# commit the real value anywhere.
+CALENDAR_ICS_URL = 'https://example.com/my_freebusy_feed.ics'
